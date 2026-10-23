@@ -157,37 +157,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-           set -euo pipefail
-           create_or_recreate() {
-             local tag=$1 dir=$2 title=$3 notes=$4
-             # If release exists, delete assets; else create. Deletion failures
-             # (e.g. asset already removed) are non-fatal so a re-run still uploads.
-             if gh release view "$tag" --repo "$REPO" >/dev/null 2>&1; then
-               echo "Release $tag exists — removing old assets..."
-               local aids
-               aids=$(gh release view "$tag" --repo "$REPO" --json assets --jq '.assets[]?.id' || true)
-               if [ -n "${aids// /}" ]; then
-                 for aid in $aids; do
-                   curl -s -X DELETE -H "Authorization: Bearer $GH_TOKEN" \
-                     "https://api.github.com/repos/$REPO/releases/assets/$aid" \
-                     -o /dev/null || true
-                 done
-               fi
-             else
-               echo "Creating release $tag ..."
-               gh release create "$tag" \
-                 --repo "$REPO" \
-                 --title "$title" \
-                 --notes "$notes"
-             fi
-             # Upload (clobber = overwrite same-name assets)
-             for f in "$dir"/*; do
-               [ -f "$f" ] || continue
-               echo "  uploading $(basename "$f") -> $tag"
-               gh release upload "$tag" "$f" --repo "$REPO" --clobber
-             done
-             echo "Done with $tag"
-           }
+          set -euo pipefail
+          create_or_recreate() {
+            local tag=$1 dir=$2 title=$3 notes=$4
+            # If release exists, delete assets; else create. Deletion failures
+            # (e.g. asset already removed) are non-fatal so a re-run still uploads.
+            if gh release view "$tag" --repo "$REPO" >/dev/null 2>&1; then
+              echo "Release $tag exists — removing old assets..."
+              local aids
+              aids=$(gh release view "$tag" --repo "$REPO" --json assets --jq '.assets[]?.id' || true)
+              if [ -n "${aids// /}" ]; then
+                for aid in $aids; do
+                  curl -s -X DELETE -H "Authorization: Bearer $GH_TOKEN" \
+                    "https://api.github.com/repos/$REPO/releases/assets/$aid" \
+                    -o /dev/null || true
+                done
+              fi
+            else
+              echo "Creating release $tag ..."
+              gh release create "$tag" \
+                --repo "$REPO" \
+                --title "$title" \
+                --notes "$notes"
+            fi
+            # Upload (clobber = overwrite same-name assets)
+            for f in "$dir"/*; do
+              [ -f "$f" ] || continue
+              echo "  uploading $(basename "$f") -> $tag"
+              gh release upload "$tag" "$f" --repo "$REPO" --clobber
+            done
+            echo "Done with $tag"
+          }
           create_or_recreate "$TAG_CHROOT" "staged/chroot" \
             "Chroot rootfs" \
             "Debian trixie arm64 chroot tarball for root mode. Replaces previous assets on this tag."
