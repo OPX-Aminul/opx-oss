@@ -27,13 +27,7 @@ fi
 say "3/4  the Debian system"
 bash "$HERE/rootfs/build.sh"
 
-say "4/4  the out-of-tree driver packages"
-if ! bash "$HERE/drivers/add-driver.sh" all; then
-	warn "some drivers did not build -- see above. These are optional packages,"
-	warn "not part of any image, so the rest of the release is still complete."
-fi
-
-say "auditing what is about to be published"
+say "4/4  auditing what is about to be published"
 bash "$HERE/rootfs/audit.sh" "$OUT_DIR/vm/rootfs.img"
 
 elapsed=$(( $(date -u +%s) - started ))

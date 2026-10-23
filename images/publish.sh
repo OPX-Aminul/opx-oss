@@ -14,7 +14,7 @@ ROOTLESS_TAG=${ROOTLESS_TAG:-rootless-main}
 [ -f "$OUT_DIR/artifacts.tsv" ] || die "nothing built yet -- run images/build-all.sh"
 
 rm -rf "$PUB"
-mkdir -p "$PUB/$CHROOT_TAG" "$PUB/$ROOTLESS_TAG" "$PUB/drivers"
+mkdir -p "$PUB/$CHROOT_TAG" "$PUB/$ROOTLESS_TAG"
 
 place() {
 	local src=$1 dst=$2
@@ -34,7 +34,6 @@ place "$OUT_DIR/uml/stub_exe"    "$PUB/$ROOTLESS_TAG/stub_exe"    >/dev/null || 
 for f in qemu-system-aarch64 libslirp.so; do
 	[ -f "$OUT_DIR/prebuilt/$f" ] && place "$OUT_DIR/prebuilt/$f" "$PUB/$ROOTLESS_TAG/$f" >/dev/null
 done
-cp -f "$OUT_DIR"/drivers/*.deb "$OUT_DIR"/drivers/Packages.gz "$PUB/drivers/" 2>/dev/null || true
 
 {
 	printf 'images        %s\n' "$(git -C "$IMAGES_DIR" rev-parse HEAD 2>/dev/null || echo 'not a git checkout')"
