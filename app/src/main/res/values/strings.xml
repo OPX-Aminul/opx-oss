@@ -1031,7 +1031,7 @@ manager</string>
     <string name="wpair_status_paired">PAIRED</string>
 
     <string name="about_title_label" translatable="false">opxOSS</string>
-    <string name="about_tagline">A free and open-source mobile pentest suite for authorized testing.</string>
+    <string name="about_tagline">A free and open-source mobile pentest suite by OP AMINUL FF (OPX) — authorized testing only.</string>
     <string name="about_pill_oss">Open-Source</string>
     <string name="about_pill_root">Root Powered</string>
     <string name="about_pill_pentest">Pentest Suite</string>
@@ -1052,16 +1052,18 @@ manager</string>
     <string name="about_section_links">Official links</string>
     <string name="about_section_legal">Legal</string>
     <string name="about_link_site_label">Project site</string>
-    <string name="about_link_site_url" translatable="false">github.com/OPX-Aminul/opx-oss</string>
+    <string name="about_link_site_url" translatable="false">opaminulff.vercel.app</string>
     <string name="about_link_github_label">Source code</string>
     <string name="about_link_github_url" translatable="false">github.com/OPX-Aminul/opx-oss</string>
+    <string name="about_link_dev_label">Developer</string>
+    <string name="about_link_dev_url" translatable="false">github.com/OPX-Aminul</string>
     <string name="about_link_blog_label">Channel</string>
     <string name="about_link_blog_url" translatable="false">t.me/opx-oss</string>
     <string name="about_link_chat_label">Chat</string>
     <string name="about_link_chat_url" translatable="false">t.me/opxosschat</string>
     <string name="about_oss_licenses_label">Open-source licenses</string>
     <string name="license_subtitle">Built on these open-source projects. Tap any entry for its source.</string>
-    <string name="about_footer">opxOSS — free software (GNU GPL v3.0) — authorized testing only</string>
+    <string name="about_footer">opxOSS by OP AMINUL FF (OPX) — free software (GNU GPL v3.0) — authorized testing only</string>
 
     <string name="shortcut_terminal_short">Terminal</string>
     <string name="shortcut_terminal_long">Open opxOSS terminal</string>

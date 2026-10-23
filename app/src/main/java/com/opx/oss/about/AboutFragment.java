@@ -58,6 +58,8 @@ public class AboutFragment extends Fragment {
                 v -> openUrl(com.opx.oss.utils.Links.SITE));
         view.findViewById(R.id.about_link_github).setOnClickListener(
                 v -> openUrl(com.opx.oss.utils.Links.GITHUB));
+        view.findViewById(R.id.about_link_dev).setOnClickListener(
+                v -> openUrl(com.opx.oss.utils.Links.DEV));
         view.findViewById(R.id.about_link_blog).setOnClickListener(
                 v -> openUrl(com.opx.oss.utils.Links.BLOG));
         view.findViewById(R.id.about_link_chat).setOnClickListener(
@@ -112,6 +114,7 @@ public class AboutFragment extends Fragment {
                 R.id.about_label_links,
                 R.id.about_link_site,
                 R.id.about_link_github,
+                R.id.about_link_dev,
                 R.id.about_link_blog,
                 R.id.about_link_chat,
                 R.id.about_label_legal,
