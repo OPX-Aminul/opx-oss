@@ -64,13 +64,13 @@
     }
   },
   "app": {
-    "versionCode": 651,
-    "versionName": "6.5.1",
-    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/6.5.1/opxOSS.6.5.1.apk",
-    "sha256": "cdd218949cf1809fddfc5f4832a40f2d2f2f91d3f0117c0d85821ba5dbc90242",
-    "size": 96617041,
+    "versionCode": 1000000,
+    "versionName": "1.0.0",
+    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.0/opxOSS-1.0.0.apk",
+    "sha256": "c624e5c783666ab07198bf72f41fe60efcb72779af8e6e1050d68e55b3b23efc",
+    "size": 96615521,
     "mandatory": false,
-    "changelog": "Hotfix over 6.5. Updating from 6.0.x? After the update, opxOSS installs a new Linux system (about 320 MB).\n\nCrashes\n- The terminal no longer crashes on launch. (#122, #126, #130)\n- Saved networks opens again on devices where it crashed every time. Saved passwords are kept.\n\nHandshake capture\n- When airodump-ng reports a handshake, opxOSS now checks the file first. If the handshake isn't there, it keeps listening instead of ending the attack.\n- The capture is stopped cleanly, so the handshake actually reaches the file.\n- Stopping a mass handshake capture no longer loses the last captured frames.\n- \"Handshake captured\" is shown only when the file confirms it.\n\nCracking\n- A running crack stays visible after you leave the screen. You can stop it there or from the notification.\n- Cancel now actually stops aircrack-ng.\n- Wordlists with spaces or quotes in the path open correctly.\n- A failed run shows the real reason, such as a wordlist that won't open or a capture with no handshake, instead of \"Password not found\".\n- Captures with several networks no longer hang.\n- Deleting the last handshake no longer breaks the list. (#159)\n\nWi-Fi\n- Monitor mode can be turned off again.\n- RTL8187 adapters get more time to appear and are no longer reported as \"driver missing\". (#125)\n- Pixie Dust says where the WPS exchange stopped instead of listing missing values. (#128)\n\nNetwork scanner\n- The root LAN scan lists every host nmap finds, including hosts behind a router or VPN. If the MAC is unknown, that field is left blank. (#127)\n- On large networks, the first hosts are no longer dropped.\n- Hosts with similar addresses, like .1 and .10, are no longer treated as the same host.\n\nRootless (VM)\n- On slow devices, the VM keeps booting as long as the guest is making progress, instead of being stopped at 150 s. (#135)\n- If port 2222 is taken, a free port is picked, and QEMU left over from a previous run is stopped first.\n- VNC and other port forwards survive SSH reconnects.\n- The guest core is no longer redeployed and restarted in a loop. (#120)\n- UML: clearer error when there is no tmpfs for its memory. (#123)\n- Clearer error when Android's sandbox (seccomp) blocks passt.\n- Updated UML kernel, now more devices are supported and experimental fix for tp-link 722n v2/v3 is implemented\n\nSaved networks\n- Import skips broken rows instead of stopping at the first one.\n- Export via root keeps passwords with apostrophes intact."
+    "changelog": ""
   },
   "news": [
     {
