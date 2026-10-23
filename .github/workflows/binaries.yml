@@ -1,0 +1,221 @@
+name: Build Binaries (3 engines)
+
+on:
+  workflow_dispatch:
+    inputs:
+      uml_tree_repo:
+        description: "Git URL of the arm64 UML kernel port (linux-um-arm64). Leave empty to skip UML build."
+        required: false
+        default: ""
+      qemu_prebuilt_base:
+        description: "Base URL (trailing slash included) from which to download prebuilt qemu-system-aarch64 and libslirp.so. Example: https://github.com/user/qemu-prebuilds/releases/download/latest/"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  actions: read
+  checks: read
+
+jobs:
+  build-binaries:
+    name: Build & stage binaries
+    runs-on: ubuntu-latest
+    env:
+      REPO: ${{ github.repository }}
+      TAG_CHROOT: chroot
+      TAG_QEMU: qemu
+      TAG_UML: uml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install system deps
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            debootstrap qemu-user-static binfmt-support e2fsprogs \
+            gcc-aarch64-linux-gnu bc flex bison libssl-dev dpkg-dev \
+            clang curl gpg git jq python3
+          # Register the arm64 emulator so debootstrap/chroot can run it.
+          sudo update-binfmts --install qemu-aarch64 /usr/bin/qemu-aarch64-static \
+            --magic '\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00' \
+            --mask '\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff' \
+            --offset 0 --fix-binary yes 2>/dev/null || true
+          sudo update-binfmts --enable qemu-aarch64 2>/dev/null || true
+          if ! grep -q enabled /proc/sys/fs/binfmt_misc/qemu-aarch64 2>/dev/null; then
+            printf ':qemu-aarch64:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-aarch64-static:OCF' \
+              | sudo tee /proc/sys/fs/binfmt_misc/register >/dev/null || true
+          fi
+          grep -q enabled /proc/sys/fs/binfmt_misc/qemu-aarch64 || {
+            echo "qemu-aarch64 binfmt is not enabled"; exit 1; }
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      # The NDK is only needed if the UML kernel is built from a source tree
+      # (provided via uml_tree_repo). When that is absent the repo's shipped
+      # binaries are staged directly, so the SDK/NDK step is intentionally
+      # skipped.
+      - name: Install Android SDK + NDK (only for UML source build)
+        if: ${{ github.event.inputs.uml_tree_repo != '' }}
+        run: |
+          SDKMANAGER="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "ndk;25.1.8937393" "cmake;3.22.1"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.1.8937393" >> $GITHUB_ENV
+
+      - name: Clone UML kernel tree (optional)
+        id: uml
+        run: |
+          set -euo pipefail
+          REPO_URL="${{ github.event.inputs.uml_tree_repo }}"
+          if [ -z "$REPO_URL" ]; then
+            echo "SKIP=true" >> $GITHUB_OUTPUT
+            echo "No uml_tree_repo provided; UML kernel will be skipped (SKIP_UML=1)."
+          else
+            mkdir -p external
+            git clone --depth 1 "$REPO_URL" external/linux-um-arm64
+            echo "TREE=$(pwd)/external/linux-um-arm64" >> $GITHUB_ENV
+            echo "SKIP=false" >> $GITHUB_OUTPUT
+            echo "UML_TREE=${TREE}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download QEMU prebuilt (optional)
+        if: ${{ github.event.inputs.qemu_prebuilt_base != '' }}
+        run: |
+          BASE="${{ github.event.inputs.qemu_prebuilt_base }}"
+          mkdir -p images/out/prebuilt
+          for f in qemu-system-aarch64 libslirp.so; do
+            url="${BASE}${f}"
+            echo "Downloading $url ..."
+            curl -fL --progress-bar -o "images/out/prebuilt/$f" "$url"
+            chmod +x "images/out/prebuilt/$f" 2>/dev/null || true
+          done
+
+      - name: Build images (roots needed)
+        env:
+          SKIP_UML: ${{ steps.uml.outputs.SKIP == 'true' && '1' || '0' }}
+          OUT_DIR: ${{ github.workspace }}/images/out
+          WORK_DIR: ${{ github.workspace }}/images/work
+        run: |
+          set -euo pipefail
+          sudo env SKIP_UML=$SKIP_UML bash images/build-all.sh
+          echo "Build complete. Artifacts in $OUT_DIR"
+          ls -la "$OUT_DIR" || true
+          ls -la "$OUT_DIR/vm" || true
+          ls -la "$OUT_DIR/uml" || true
+
+      - name: Stage artifacts per engine
+        run: |
+          set -euo pipefail
+          mkdir -p staged/{uml,qemu,chroot,drivers}
+          # chroot
+          if [ -f images/out/chroot64-debian.tar.gz ]; then
+            cp images/out/chroot64-debian.tar.gz staged/chroot/
+          fi
+          # qemu (rootless VM)
+          for f in Image initrd.img rootfs.imgz; do
+            [ -f "images/out/vm/$f" ] && cp "images/out/vm/$f" staged/qemu/
+          done
+          if [ -f "images/out/prebuilt/qemu-system-aarch64" ]; then
+            cp "images/out/prebuilt/qemu-system-aarch64" staged/qemu/
+          fi
+          if [ -f "images/out/prebuilt/libslirp.so" ]; then
+            cp "images/out/prebuilt/libslirp.so" staged/qemu/
+          fi
+          # uml
+          for f in linux-uml stub_exe umusb; do
+            [ -f "images/out/uml/$f" ] && cp "images/out/uml/$f" staged/uml/
+          done
+          # Fall back to the binaries already bundled in the repo when the
+          # external UML tree / QEMU prebuilt URL is not supplied. These are
+          # the same artifacts (identical sizes) the app ships.
+          JNILIB=app/src/main/jniLibs/arm64-v8a
+          [ -f staged/qemu/qemu-system-aarch64 ] || cp "$JNILIB/libqemu.so" staged/qemu/qemu-system-aarch64
+          [ -f staged/qemu/libslirp.so ] || cp "$JNILIB/libslirp.so" staged/qemu/libslirp.so
+          [ -f staged/uml/linux-uml ] || cp "$JNILIB/libuml.so" staged/uml/linux-uml
+          [ -f staged/uml/stub_exe ] || cp "$JNILIB/libstub.so" staged/uml/stub_exe
+          [ -f staged/uml/umusb ] || cp "$JNILIB/libumusb.so" staged/uml/umusb
+          # drivers (optional — attach to qemu tag for convenience)
+          if ls images/out/drivers/*.deb >/dev/null 2>&1; then
+            cp images/out/drivers/*.deb staged/qemu/ 2>/dev/null || true
+          fi
+          echo "Staging complete:"
+          for d in staged/*/; do echo "--- $d ---"; ls "$d"; done
+
+      - name: Ensure + update release tags (in-place)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          create_or_recreate() {
+            local tag=$1 dir=$2 title=$3 notes=$4
+            # If release exists, delete assets; else create
+            if gh release view "$tag" --repo "$REPO" >/dev/null 2>&1; then
+              echo "Release $tag exists — removing old assets..."
+              gh release view "$tag" --repo "$REPO" --json assets --jq '.assets[]?.id' \
+                | while read -r aid; do
+                    gh api -X DELETE "/repos/$REPO/releases/assets/$aid" >/dev/null
+                  done
+            else
+              echo "Creating release $tag ..."
+              gh release create "$tag" \
+                --repo "$REPO" \
+                --title "$title" \
+                --notes "$notes"
+            fi
+            # Upload (clobber = overwrite same-name assets)
+            for f in "$dir"/*; do
+              [ -f "$f" ] || continue
+              echo "  uploading $(basename "$f") -> $tag"
+              gh release upload "$tag" "$f" --repo "$REPO" --clobber
+            done
+            echo "Done with $tag"
+          }
+          create_or_recreate "$TAG_CHROOT" "staged/chroot" \
+            "Chroot rootfs" \
+            "Debian trixie arm64 chroot tarball for root mode. Replaces previous assets on this tag."
+          create_or_recreate "$TAG_QEMU" "staged/qemu" \
+            "QEMU rootless VM" \
+            "QEMU rootless VM binaries (Image, initrd.img, rootfs.imgz, optional qemu-system-aarch64/libslirp.so). Replaces previous assets on this tag."
+          create_or_recreate "$TAG_UML" "staged/uml" \
+            "UML (User Mode Linux)" \
+            "UML engine binaries (linux-uml, stub_exe, umusb). Replaces previous assets on this tag."
+
+      - name: Update manifest binary hashes
+        run: |
+          set -euo pipefail
+          python3 scripts/update-manifest.py \
+            --repo "$REPO" \
+            --base-url "https://github.com/$REPO/releases/download" \
+            $([ -f staged/chroot/chroot64-debian.tar.gz ] && echo "--tag-chroot staged/chroot/chroot64-debian.tar.gz") \
+            $([ -f staged/qemu/Image ] && echo "--tag-qemu-kernel staged/qemu/Image") \
+            $([ -f staged/qemu/initrd.img ] && echo "--tag-qemu-initrd staged/qemu/initrd.img") \
+            $([ -f staged/qemu/rootfs.imgz ] && echo "--tag-qemu-rootfs staged/qemu/rootfs.imgz") \
+            $([ -f staged/qemu/qemu-system-aarch64 ] && echo "--tag-qemu-qemu staged/qemu/qemu-system-aarch64") \
+            $([ -f staged/qemu/libslirp.so ] && echo "--tag-qemu-libslirp staged/qemu/libslirp.so") \
+            $([ -f staged/uml/linux-uml ] && echo "--tag-uml-linux staged/uml/linux-uml") \
+            $([ -f staged/uml/stub_exe ] && echo "--tag-uml-stub staged/uml/stub_exe") \
+            --out opxoss_manifest.json
+          git add opxoss_manifest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(manifest): update binary hashes from uml/qemu/chroot releases" || echo "manifest unchanged"
+
+      - name: Push commits
+        run: |
+          set -euo pipefail
+          BRANCH="${{ github.head_ref || github.ref_name }}"
+          if [ -n "$(git status --porcelain)" ]; then
+            git push origin "$BRANCH"
+            echo "Pushed manifest update to $BRANCH"
+          else
+            echo "Nothing to push (manifest already up-to-date)."
+          fi

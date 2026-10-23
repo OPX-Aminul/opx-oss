@@ -1,0 +1,206 @@
+name: APK Release (auto-version)
+
+on:
+  workflow_dispatch:
+    inputs:
+      changelog:
+        description: "Release changelog / what's new (shown in the GitHub release)."
+        required: false
+        default: ""
+      force_version:
+        description: "Override the auto-detected version (e.g. v1.2.3). Leave empty for auto."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  actions: read
+  checks: read
+
+jobs:
+  determine-version:
+    name: Determine next version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.ver.outputs.tag }}
+      version_name: ${{ steps.ver.outputs.version_name }}
+      version_code: ${{ steps.ver.outputs.version_code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ github.event.inputs.force_version }}
+        run: |
+          set -euo pipefail
+          PREFIX="v"
+          if [ -n "$FORCE" ]; then
+            raw="${FORCE#$PREFIX}"
+          else
+            last=$(gh release list --limit 200 --json tagName --jq '[.[] | select(.tagName | startswith("v")) | .tagName] | sort_by(ltrimstr("v") | split(".") | map(tonumber)) | reverse | .[0]' || true)
+            if [ -z "$last" ]; then
+              raw="1.0.0"
+            else
+              raw="${last#$PREFIX}"
+              # bump patch
+              IFS='.' read -r major minor patch <<< "$raw"
+              raw="$major.$minor.$((patch + 1))"
+            fi
+          fi
+          tag="$PREFIX$raw"
+          IFS='.' read -r major minor patch <<< "$raw"
+          version_code=$(( major * 1000000 + minor * 1000 + patch ))
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "version_name=$raw" >> $GITHUB_OUTPUT
+          echo "version_code=$version_code" >> $GITHUB_OUTPUT
+          echo "Computed $tag (versionCode=$version_code)"
+
+  build:
+    name: Build + release APK
+    needs: determine-version
+    runs-on: ubuntu-latest
+    env:
+      REPO: ${{ github.repository }}
+      VERSION_NAME: ${{ needs.determine-version.outputs.version_name }}
+      VERSION_CODE: ${{ needs.determine-version.outputs.version_code }}
+      TAG: ${{ needs.determine-version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Install Android SDK + NDK
+        run: |
+          SDKMANAGER="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" "platforms;android-33" "build-tools;34.0.0" "ndk;25.1.8937393" "cmake;3.22.1"
+
+      - name: Restore / generate signing keystore
+        env:
+          OPXOSS_RELEASE_STORE_FILE_B64: ${{ secrets.OPXOSS_RELEASE_STORE_FILE_B64 }}
+          OPXOSS_RELEASE_STORE_PASSWORD: ${{ secrets.OPXOSS_RELEASE_STORE_PASSWORD }}
+          OPXOSS_RELEASE_KEY_ALIAS: ${{ secrets.OPXOSS_RELEASE_KEY_ALIAS }}
+          OPXOSS_RELEASE_KEY_PASSWORD: ${{ secrets.OPXOSS_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p keystore
+          if [ -n "${OPXOSS_RELEASE_STORE_FILE_B64:-}" ]; then
+            printf '%s' "$OPXOSS_RELEASE_STORE_FILE_B64" | base64 -d > keystore/opxoss-release.jks
+            ALIAS="${OPXOSS_RELEASE_KEY_ALIAS:-opxoss}"
+            SPASS="$OPXOSS_RELEASE_STORE_PASSWORD"
+            KPASS="$OPXOSS_RELEASE_KEY_PASSWORD"
+            echo "Restored keystore from secrets."
+          else
+            echo "No OPXOSS_RELEASE_STORE_FILE_B64 secret found; generating ephemeral keystore."
+            out=$(bash scripts/gen-keystore.sh keystore/opxoss-release.jks)
+            printf '%s\n' "$out"
+            ALIAS=$(printf '%s\n' "$out" | sed -n 's/^KS_ALIAS=//p')
+            KPASS=$(printf '%s\n' "$out" | sed -n 's/^KS_PASSWORD=//p')
+            SPASS=$(printf '%s\n' "$out" | sed -n 's/^STORE_PASSWORD=//p')
+          fi
+          {
+            echo "OPXOSS_RELEASE_STORE_FILE=keystore/opxoss-release.jks"
+            echo "OPXOSS_RELEASE_STORE_PASSWORD=$SPASS"
+            echo "OPXOSS_RELEASE_KEY_ALIAS=$ALIAS"
+            echo "OPXOSS_RELEASE_KEY_PASSWORD=$KPASS"
+          } >> "$GITHUB_ENV"
+
+      - name: Assemble release APK
+        env:
+          OPXOSS_VERSION_NAME: $VERSION_NAME
+          OPXOSS_VERSION_CODE: $VERSION_CODE
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew assembleRelease --stacktrace
+          APK=$(find app/build/outputs/apk/release -name "*.apk" -type f | head -1)
+          echo "APK_PATH=$APK" >> $GITHUB_ENV
+          echo "Built $APK"
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp "$APK_PATH" "out/opxOSS-${VERSION_NAME}.apk"
+          echo "APK_FILE=out/opxOSS-${VERSION_NAME}.apk" >> $GITHUB_ENV
+
+      - name: Fetch current binary hashes (for manifest update before APK)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p staged/{chroot,qemu,uml}
+          gh release download chroot --repo "$REPO" -D staged/chroot/ --pattern 'chroot64-debian.tar.gz' || true
+          gh release download qemu --repo "$REPO" -D staged/qemu/ \
+            --pattern 'Image' --pattern 'initrd.img' --pattern 'rootfs.imgz' \
+            --pattern 'qemu-system-aarch64' --pattern 'libslirp.so' || true
+          gh release download uml --repo "$REPO" -D staged/uml/ \
+            --pattern 'linux-uml' --pattern 'stub_exe' || true
+          echo "Fetched current binaries for manifest hash update."
+          for d in staged/*/; do echo "--- $d ---"; ls "$d"; done
+
+      - name: Update manifest binary hashes
+        run: |
+          set -euo pipefail
+          python3 scripts/update-manifest.py \
+            --repo "$REPO" \
+            --base-url "https://github.com/$REPO/releases/download" \
+            $([ -f staged/chroot/chroot64-debian.tar.gz ] && echo "--tag-chroot staged/chroot/chroot64-debian.tar.gz") \
+            $([ -f staged/qemu/Image ] && echo "--tag-qemu-kernel staged/qemu/Image") \
+            $([ -f staged/qemu/initrd.img ] && echo "--tag-qemu-initrd staged/qemu/initrd.img") \
+            $([ -f staged/qemu/rootfs.imgz ] && echo "--tag-qemu-rootfs staged/qemu/rootfs.imgz") \
+            $([ -f staged/qemu/qemu-system-aarch64 ] && echo "--tag-qemu-qemu staged/qemu/qemu-system-aarch64") \
+            $([ -f staged/qemu/libslirp.so ] && echo "--tag-qemu-libslirp staged/qemu/libslirp.so") \
+            $([ -f staged/uml/linux-uml ] && echo "--tag-uml-linux staged/uml/linux-uml") \
+            $([ -f staged/uml/stub_exe ] && echo "--tag-uml-stub staged/uml/stub_exe") \
+            --out opxoss_manifest.json
+          git add opxoss_manifest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(manifest): update binary hashes before APK $TAG" || echo "manifest unchanged"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ github.event.inputs.changelog }}
+        run: |
+          set -euo pipefail
+          NOTES="${NOTES:-Automated APK release.}"
+          # Delete prior release with this tag if exists (avoid conflicts), but keep history
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — deleting old release to recreate cleanly."
+            gh release delete "$TAG" --repo "$REPO" --yes --cleanup-tag || true
+          fi
+          gh release create "$TAG" \
+            --repo "$REPO" \
+            --title "$TAG" \
+            --notes "$NOTES" \
+            "$APK_FILE"
+          echo "Created release $TAG"
+
+      - name: Update manifest app block + push
+        env:
+          CHANGELOG: ${{ github.event.inputs.changelog }}
+        run: |
+          set -euo pipefail
+          export APK_SHA256=$(sha256sum "$APK_FILE" | cut -d' ' -f1)
+          export APK_SIZE=$(stat -c%s "$APK_FILE")
+          export APK_URL="https://github.com/$REPO/releases/download/$TAG/opxOSS-${VERSION_NAME}.apk"
+          python3 scripts/update-app-block.py
+          git add opxoss_manifest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(manifest): finalize app block for $TAG" || echo "manifest unchanged"
+          git push origin "${GITHUB_REF_NAME}"
+          echo "Pushed final manifest + release artifacts."

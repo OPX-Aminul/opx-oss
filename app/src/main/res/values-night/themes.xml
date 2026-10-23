@@ -1,0 +1,31 @@
+<resources>
+    <style name="Theme.opxOSS" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/opxoss_accent</item>
+        <item name="colorPrimaryDark">?attr/colorSurface</item>
+        <item name="colorPrimaryVariant">@color/opxoss_accent</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/opxoss_accent</item>
+        <item name="colorSecondaryVariant">@color/opxoss_accent_contrast</item>
+        <item name="colorOnSecondary">@color/opxoss_accent_contrast</item>
+        <item name="android:navigationBarColor">@color/toolbar_color</item>
+        <item name="android:statusBarColor">@color/toolbar_color</item>
+        <item name="switchStyle">@style/Widget.opxOSS.Switch</item>
+        <item name="android:textViewStyle">@style/Widget.opxOSS.TextView</item>
+        <item name="android:buttonStyle">@style/Widget.opxOSS.Button</item>
+        <item name="materialCardViewStyle">@style/Widget.opxOSS.CardView</item>
+        <item name="floatingActionButtonStyle">@style/Widget.opxOSS.FAB</item>
+        <item name="materialAlertDialogTheme">@style/Widget.opxOSS.AlertDialog</item>
+        <item name="backgroundColor">#1e1e1e</item>
+    </style>
+    <style name="Theme.opxOSSFloatingDialog" parent="Theme.opxOSS">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+    <style name="Theme.opxOSS.Immersive" parent="Theme.opxOSS" />
+</resources>
