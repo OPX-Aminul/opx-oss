@@ -26,6 +26,7 @@ jobs:
       TAG_CHROOT: chroot
       TAG_QEMU: qemu
       TAG_UML: uml
+      TAG_DRIVERS: drivers
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -144,9 +145,10 @@ jobs:
           [ -f staged/uml/linux-uml ] || cp "$JNILIB/libuml.so" staged/uml/linux-uml
           [ -f staged/uml/stub_exe ] || cp "$JNILIB/libstub.so" staged/uml/stub_exe
           [ -f staged/uml/umusb ] || cp "$JNILIB/libumusb.so" staged/uml/umusb
-          # drivers (optional — attach to qemu tag for convenience)
+          # drivers (staging only — published to their own 'drivers' tag, NOT qemu),
+          # matching upstream's $BASE/drivers/*.deb layout.
           if ls images/out/drivers/*.deb >/dev/null 2>&1; then
-            cp images/out/drivers/*.deb staged/qemu/ 2>/dev/null || true
+            cp images/out/drivers/*.deb staged/drivers/ 2>/dev/null || true
           fi
           echo "Staging complete:"
           for d in staged/*/; do echo "--- $d ---"; ls "$d"; done
@@ -189,6 +191,12 @@ jobs:
           create_or_recreate "$TAG_UML" "staged/uml" \
             "UML (User Mode Linux)" \
             "UML engine binaries (linux-uml, stub_exe, umusb). Replaces previous assets on this tag."
+          # Drivers live in their own tag to match upstream's $BASE/drivers/*.deb layout.
+          if [ -d "staged/drivers" ] && ls staged/drivers/*.deb >/dev/null 2>&1; then
+            create_or_recreate "$TAG_DRIVERS" "staged/drivers" \
+              "RTL wifi driver .deb packages" \
+              "RTL8812AU/8814AU/8821CU/88x2bu driver packages for arm64. Replaces previous assets on this tag."
+          fi
 
       - name: Update manifest binary hashes
         run: |
