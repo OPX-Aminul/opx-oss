@@ -87,6 +87,12 @@ elif [ ! -d "$SRC" ]; then
 fi
 [ -f "$SRC/Makefile" ] || die "no kernel source at $SRC"
 
+if [ -z "${SKIP_XIAOMI_PATCH:-0}" ] && [ -f "$SRC/drivers/usb/core/hub.c" ]; then
+	say "applying Xiaomi/MIUI USB speed patch (hub.c)"
+	python3 "$IMAGES_DIR/../scripts/apply-xiaomi-hub-patch.py" "$SRC/drivers/usb/core/hub.c" \
+		|| die "Xiaomi hub.c patch failed (set SKIP_XIAOMI_PATCH=1 to ignore)"
+fi
+
 mkdir -p "$O"
 
 stamp="$SRC@$(git -C "$SRC" rev-parse HEAD 2>/dev/null || echo "$KVER")"
