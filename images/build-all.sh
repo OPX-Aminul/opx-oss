@@ -12,13 +12,13 @@ rm -f "$OUT_DIR/artifacts.tsv"
 started=$(date -u +%s)
 
 say "1/4  the VM kernel"
-bash "$HERE/kernel/build-vm.sh"
+TREE=${UML_TREE:-${TREE:-}} bash "$HERE/kernel/build-vm.sh"
 
 if [ "${SKIP_UML:-0}" = 1 ]; then
 	say "2/4  the UML kernel -- skipped (SKIP_UML=1)"
 else
 	say "2/4  the UML kernel"
-	if ! bash "$HERE/kernel/build-uml.sh"; then
+	if ! TREE=${UML_TREE:-${TREE:-}} bash "$HERE/kernel/build-uml.sh"; then
 		warn "the UML kernel did not build. The VM engine's artifacts are"
 		warn "unaffected; set SKIP_UML=1 to stop trying, or read the error above."
 	fi
