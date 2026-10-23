@@ -6,10 +6,13 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 KS=${1:-$HERE/../keystore/opxoss-release.jks}
 DEST=${2:-}
-STOREPASS=${OPXOSS_RELEASE_STORE_PASSWORD:-$(openssl rand -base64 16)}
-KEYPASS=${OPXOSS_RELEASE_KEY_PASSWORD:-$(openssl rand -base64 16)}
 ALIAS=${OPXOSS_RELEASE_KEY_ALIAS:-opxoss}
-STORAGE=${OPXOSS_RELEASE_STORE_PASSWORD:-"$STOREPASS"}
+# For PKCS12 (the keytool default on recent JDK), store and key passwords must match.
+# Use a single password for both to avoid "Given final block not properly padded".
+PASS=${OPXOSS_RELEASE_STORE_PASSWORD:-$(openssl rand -base64 16)}
+STOREPASS="$PASS"
+KEYPASS="$PASS"
+STORAGE="$PASS"
 
 mkdir -p "$(dirname "$KS")"
 if [ ! -f "$KS" ]; then
