@@ -26,7 +26,8 @@ android {
         release {
             def storeFilePath = project.findProperty('OPXOSS_RELEASE_STORE_FILE') ?: System.getenv('OPXOSS_RELEASE_STORE_FILE')
             if (storeFilePath) {
-                storeFile file(storeFilePath)
+                def resolved = storeFilePath.endsWith('.jks') && !(new File(storeFilePath)).isAbsolute() ? file("${rootProject.projectDir}/${storeFilePath}") : file(storeFilePath)
+                storeFile resolved
                 storePassword project.findProperty('OPXOSS_RELEASE_STORE_PASSWORD') ?: System.getenv('OPXOSS_RELEASE_STORE_PASSWORD')
                 keyAlias project.findProperty('OPXOSS_RELEASE_KEY_ALIAS') ?: System.getenv('OPXOSS_RELEASE_KEY_ALIAS')
                 keyPassword project.findProperty('OPXOSS_RELEASE_KEY_PASSWORD') ?: System.getenv('OPXOSS_RELEASE_KEY_PASSWORD')

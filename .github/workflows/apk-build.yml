@@ -111,7 +111,7 @@ jobs:
             SPASS=$(printf '%s\n' "$out" | sed -n 's/^STORE_PASSWORD=//p')
           fi
           {
-            echo "OPXOSS_RELEASE_STORE_FILE=keystore/opxoss-release.jks"
+            echo "OPXOSS_RELEASE_STORE_FILE=$GITHUB_WORKSPACE/keystore/opxoss-release.jks"
             echo "OPXOSS_RELEASE_STORE_PASSWORD=$SPASS"
             echo "OPXOSS_RELEASE_KEY_ALIAS=$ALIAS"
             echo "OPXOSS_RELEASE_KEY_PASSWORD=$KPASS"
