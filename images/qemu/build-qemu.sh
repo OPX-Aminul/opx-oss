@@ -41,6 +41,34 @@ export PKG_CONFIG_PATH=$DEPS/lib/pkgconfig
 export PKG_CONFIG_LIBDIR=$DEPS/lib/pkgconfig:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API/pkgconfig
 export LIBRARY_PATH="$DEPS/lib:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API"
 
+# Declare shm_open/shm_unlink for NDK API < 30 where the headers omit them.
+mkdir -p "$DEPS/include"
+cat > "$DEPS/include/shim_rt.h" <<'RT'
+#ifndef SHIM_RT_H
+#define SHIM_RT_H
+#include <sys/types.h>
+#include <fcntl.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern int shm_open(const char *, int, mode_t);
+extern int shm_unlink(const char *);
+#ifdef __cplusplus
+}
+#endif
+#endif
+RT
+
+# Android NDK bionic (API 29) does not export POSIX shm_open/shm_unlink — they
+# were added in API 30. QEMU's meson probes for shm_open and then falls back to
+# find_library('rt'); since Android has no librt either, build a tiny librt
+# shim providing those symbols so meson setup succeeds.
+say "building librt shim for aarch64-linux-android"
+"$CROSS-clang" -fPIC -shared -o "$DEPS/lib/librt.so" "$HERE/shim_rt.c" \
+	-Wl,--soname,librt.so 2>/dev/null || \
+	die "librt shim build failed"
+"$TOOL/llvm-strip" --strip-unneeded "$DEPS/lib/librt.so" 2>/dev/null || true
+
 # A meson cross file shared by QEMU and the dependency builds. Every library
 # QEMU links against must be compiled for the target (aarch64-linux-android),
 # not pulled from the host -- host glib/pixman are x86_64 and must not be used.
@@ -64,33 +92,6 @@ cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
 EOF
-
-# Android NDK bionic (API 29) does not export POSIX shm_open/shm_unlink — they
-# were added in API 30. QEMU's meson probes for shm_open and then falls back to
-# find_library('rt'); since Android has no librt either, build a tiny librt
-# shim providing those symbols so meson setup succeeds.
-say "building librt shim for aarch64-linux-android"
-"$CROSS-clang" -fPIC -shared -o "$DEPS/lib/librt.so" "$HERE/shim_rt.c" \
-	-Wl,--soname,librt.so 2>/dev/null || \
-	die "librt shim build failed"
-"$TOOL/llvm-strip" --strip-unneeded "$DEPS/lib/librt.so" 2>/dev/null || true
-
-# Declare shm_open/shm_unlink for NDK API < 30 where the headers omit them.
-cat > "$DEPS/include/shim_rt.h" <<'RT'
-#ifndef SHIM_RT_H
-#define SHIM_RT_H
-#include <sys/types.h>
-#include <fcntl.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern int shm_open(const char *, int, mode_t);
-extern int shm_unlink(const char *);
-#ifdef __cplusplus
-}
-#endif
-#endif
-RT
 
 fetch_unpack() {
 	local dir=$1 url=$2 file=$3
