@@ -1,8 +1,12 @@
 /* Minimal librt shim for Android NDK API 29 where POSIX shm_open/shm_unlink
  * are absent from bionic libc (added in API 30). Provides file-backed
  * implementations via a temporary directory so QEMU's meson shm_open probe
- * and the actual runtime code (which assign the result to an int fd) succeed. */
-#define _GNU_SOURCE
+ * and the actual runtime code (which assign the result to an int fd) succeed.
+ *
+ * Note: We do NOT define _GNU_SOURCE here because it can cause NDK's own
+ * headers (fcntl.h) to emit parse errors with newer clang versions. The
+ * extern declarations in shim_rt.h are sufficient for the compiler; we
+ * only need the symbols at link time via librt.so. */
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>

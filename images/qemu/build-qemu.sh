@@ -42,20 +42,18 @@ export PKG_CONFIG_LIBDIR=$DEPS/lib/pkgconfig:$TOOL/../sysroot/usr/lib/aarch64-li
 export LIBRARY_PATH="$DEPS/lib:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API"
 
 # Declare shm_open/shm_unlink for NDK API < 30 where the headers omit them.
+# We do NOT define _GNU_SOURCE to avoid corrupting NDK header parsing.
+# This header only declares symbols — it does NOT include system headers,
+# so there's no risk of header recursion or NDK annotation conflicts.
 mkdir -p "$DEPS/lib" "$DEPS/include"
 cat > "$DEPS/include/shim_rt.h" <<'RT'
 #ifndef SHIM_RT_H
 #define SHIM_RT_H
-#include <sys/types.h>
-#include <fcntl.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef unsigned int mode_t;
 extern int shm_open(const char *, int, mode_t);
 extern int shm_unlink(const char *);
-#ifdef __cplusplus
-}
-#endif
+extern int fallocate(int, int, long long, long long);
+extern int fallocate64(int, int, long long, long long);
 #endif
 RT
 
@@ -80,8 +78,8 @@ strip = '$TOOL/llvm-strip'
 pkgconfig = 'pkg-config'
 
 [built-in options]
-c_args = ['-fPIC', '-include', '$DEPS/include/shim_rt.h']
-cpp_args = ['-fPIC', '-include', '$DEPS/include/shim_rt.h']
+c_args = ['-fPIC']
+cpp_args = ['-fPIC']
 c_link_args = ['-L$DEPS/lib']
 cpp_link_args = ['-L$DEPS/lib']
 
