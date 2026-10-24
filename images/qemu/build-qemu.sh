@@ -42,7 +42,7 @@ export PKG_CONFIG_LIBDIR=$DEPS/lib/pkgconfig:$TOOL/../sysroot/usr/lib/aarch64-li
 export LIBRARY_PATH="$DEPS/lib:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API"
 
 # Declare shm_open/shm_unlink for NDK API < 30 where the headers omit them.
-mkdir -p "$DEPS/include"
+mkdir -p "$DEPS/lib" "$DEPS/include"
 cat > "$DEPS/include/shim_rt.h" <<'RT'
 #ifndef SHIM_RT_H
 #define SHIM_RT_H
@@ -65,8 +65,7 @@ RT
 # shim providing those symbols so meson setup succeeds.
 say "building librt shim for aarch64-linux-android"
 "$CROSS-clang" -fPIC -shared -o "$DEPS/lib/librt.so" "$HERE/shim_rt.c" \
-	-Wl,--soname,librt.so 2>/dev/null || \
-	die "librt shim build failed"
+	-Wl,--soname,librt.so || die "librt shim build failed"
 "$TOOL/llvm-strip" --strip-unneeded "$DEPS/lib/librt.so" 2>/dev/null || true
 
 # A meson cross file shared by QEMU and the dependency builds. Every library

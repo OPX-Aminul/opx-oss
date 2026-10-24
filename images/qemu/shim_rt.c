@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <time.h>
+#include <stdio.h>
 
 #define SHM_DIR "/dev/shm"
 
