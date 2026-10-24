@@ -260,7 +260,7 @@ meson setup "$O/build" "$SRC" \
 	-Dfdt=internal \
 	-Dslirp=enabled \
 	-Dusb_redir=disabled \
-	-Daudio_drv_list=default,none \
+	-Daudio_drv_list='' \
 	-Dvnc=disabled \
 	-Dgtk=disabled \
 	-Dsdl=disabled \
