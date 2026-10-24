@@ -136,6 +136,10 @@ images/
       uml.config        what a kernel with no hardware needs
       usb.config        what a passed-through device becomes -- shared
       wireless.config   every USB adapter -- shared by both kernels
+  qemu/
+    build-qemu.sh       QEMU 11 from source for Android arm64 (NDK), with
+                        the Xiaomi/MIUI host-libusb.c USB quirk; outputs the
+                        libqemu.so + libslirp.so the app execs
   tools/
     build-umusb.sh      the USB/IP server, bionic + static, for the app
   rootfs/
@@ -176,6 +180,23 @@ decision — the second list was just written later.
 A device that binds no driver is still not a failure: both guests give it a
 `/dev/bus/usb` node, which is what libusb opens and what `docker run --device`
 takes.
+
+### Xiaomi/MIUI USB speed misreport
+
+Some Xiaomi/MIUI hosts misreport full-speed devices as low-speed. The device
+descriptor still claims maxpacket=64 — impossible for a real low-speed device
+(spec allows <=8) — so the guest kernel rejects it with "Invalid ep0
+maxpacket: 64". The fix has two layers:
+
+- guest kernel `drivers/usb/core/hub.c` (`apply-xiaomi-hub-patch.py` in
+  `kernel/build-vm.sh`): when an enumerated low-speed device claims
+  maxpacket=64, trust the descriptor and re-qualify it as full-speed;
+- the QEMU host connector `hw/usb/host-libusb.c` (`apply-xiaomi-qemu-patch.py`
+  in `qemu/build-qemu.sh`): same correction in the emulator's USB-3 ep0
+  maxpacket fixup, so the device is presented to the guest with the right
+  speed.
+
+`SKIP_XIAOMI_PATCH=1` disables both (each script's guard is separate).
 
 ## Order matters
 

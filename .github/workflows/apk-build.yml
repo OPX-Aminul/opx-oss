@@ -117,6 +117,25 @@ jobs:
             echo "OPXOSS_RELEASE_KEY_PASSWORD=$KPASS"
           } >> "$GITHUB_ENV"
 
+      - name: Inject QEMU binary with Xiaomi/MIUI USB fix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          JNILIB=app/src/main/jniLibs/arm64-v8a
+          # Prefer the qemu release's freshly built (patched) qemu binary.
+          # Fall back to the repo's bundled libqemu.so when no release asset
+          # is available yet (first build).
+          if gh release view qemu --repo "$REPO" >/dev/null 2>&1; then
+            gh release download qemu --repo "$REPO" \
+              --pattern 'qemu-system-aarch64' -D /tmp/qemu-release || true
+            if [ -f /tmp/qemu-release/qemu-system-aarch64 ]; then
+              cp /tmp/qemu-release/qemu-system-aarch64 "$JNILIB/libqemu.so"
+              echo "Injected patched qemu-system-aarch64 as libqemu.so"
+              ls -la "$JNILIB/libqemu.so"
+            fi
+          fi
+
       - name: Assemble release APK
         env:
           OPXOSS_VERSION_NAME: $VERSION_NAME

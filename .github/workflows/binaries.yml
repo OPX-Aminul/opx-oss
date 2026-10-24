@@ -11,6 +11,10 @@ on:
         description: "Base URL (trailing slash included) from which to download prebuilt qemu-system-aarch64 and libslirp.so. Example: https://github.com/user/qemu-prebuilds/releases/download/latest/"
         required: false
         default: ""
+      build_qemu:
+        description: "Build QEMU from source (Xiaomi/MIUI USB fix in host-libusb.c) and publish it as the qemu release's qemu-system-aarch64. Requires the Android NDK."
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -39,7 +43,8 @@ jobs:
           sudo apt-get install -y \
             debootstrap qemu-user-static binfmt-support e2fsprogs \
             gcc-aarch64-linux-gnu bc flex bison libssl-dev dpkg-dev \
-            clang curl gpg git jq python3
+            clang curl gpg git jq python3 ninja-build meson pkg-config \
+            libglib2.0-dev libpixman-1-dev
           # Register the arm64 emulator so debootstrap/chroot can run it.
           sudo update-binfmts --install qemu-aarch64 /usr/bin/qemu-aarch64-static \
             --magic '\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00' \
@@ -60,16 +65,18 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # The NDK is only needed if the UML kernel is built from a source tree
-      # (provided via uml_tree_repo). When that is absent the repo's shipped
-      # binaries are staged directly, so the SDK/NDK step is intentionally
-      # skipped.
-      - name: Install Android SDK + NDK (only for UML source build)
-        if: ${{ github.event.inputs.uml_tree_repo != '' }}
+      # The NDK is needed for the UML source build and for building QEMU
+      # from source. When neither happens the repo's shipped binaries are
+      # staged directly, so the SDK/NDK step is intentionally skipped.
+      # The version matches the toolchain the original libqemu.so was built
+      # with: stable NDK r29 (29.0.14206865), clang 21, per the binary's
+      # .comment (clang 21.0.0, r563880c) and .note.android.ident (r29).
+      - name: Install Android SDK + NDK (for UML source / QEMU build)
+        if: ${{ github.event.inputs.uml_tree_repo != '' || github.event.inputs.build_qemu == 'true' }}
         run: |
           SDKMANAGER="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
-          yes | "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "ndk;25.1.8937393" "cmake;3.22.1"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.1.8937393" >> $GITHUB_ENV
+          yes | "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "ndk;29.0.14206865" "cmake;3.22.1"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
 
       - name: Clone UML kernel tree (optional)
         id: uml
@@ -97,6 +104,18 @@ jobs:
             curl -fL --progress-bar -o "images/out/prebuilt/$f" "$url"
             chmod +x "images/out/prebuilt/$f" 2>/dev/null || true
           done
+
+      - name: Build QEMU from source (Xiaomi/MIUI USB fix)
+        if: ${{ github.event.inputs.build_qemu == 'true' }}
+        env:
+          NDK: ${{ env.ANDROID_NDK_HOME }}
+          OUT_DIR: ${{ github.workspace }}/images/out
+          WORK_DIR: ${{ github.workspace }}/images/work
+        run: |
+          set -euo pipefail
+          bash images/qemu/build-qemu.sh
+          echo "QEMU build complete."
+          ls -la images/out/prebuilt || true
 
       - name: Build images (roots needed)
         env:
