@@ -250,16 +250,17 @@ meson setup "$O/build" "$SRC" \
 	--cross-file "$O/cross.ini" \
 	--prefix "$O/install" \
 	--buildtype=release \
-	--strip \
 	-Db_lto=true \
 	-Db_pie=true \
 	-Dtools=disabled \
+	-Dc_args='-fPIC,-ffile-prefix-map=$O=/tmp,-ffile-prefix-map=$SRC=/tmp' \
+	-Dcpp_args='-fPIC,-ffile-prefix-map=$O=/tmp,-ffile-prefix-map=$SRC=/tmp' \
 	-Ddocs=disabled \
 	-Dguest_agent=disabled \
 	-Dfdt=internal \
 	-Dslirp=enabled \
 	-Dusb_redir=disabled \
-	-Daudio_drv_list=default \
+	-Daudio_drv_list=default,none \
 	-Dvnc=disabled \
 	-Dgtk=disabled \
 	-Dsdl=disabled \
@@ -300,9 +301,14 @@ ninja -C "$O/build" -j"$JOBS" qemu-system-aarch64
 	|| warn "qemu-system-aarch64 has no PT_INTERP; the app execs it via linker64"
 "$TOOL/llvm-readelf" -d "$O/build/qemu-system-aarch64" 2>/dev/null | grep -q libslirp.so \
 	|| warn "qemu-system-aarch64 does not NEEDED libslirp.so (expected dynamic slirp)"
-"$TOOL/llvm-strip" "$O/build/qemu-system-aarch64" 2>/dev/null \
+
+# Strip the binary to remove debug info and symbol tables that may carry
+# build-machine paths. Use --strip-debug (not --strip-all) to preserve the
+# dynamic symbol table needed for dynamic linking on Android.
+"$TOOL/llvm-strip" --strip-debug "$O/build/qemu-system-aarch64" 2>/dev/null \
 	|| warn "llvm-strip failed; shipping unstripped"
 
+# Check for build-machine paths after stripping.
 leak=$(grep -a -o -E '/(home|root|Users)/[A-Za-z0-9._-]+' "$O/build/qemu-system-aarch64" | sort -u || true)
 [ -z "$leak" ] || die "the binary carries build-machine paths:
 $leak"
