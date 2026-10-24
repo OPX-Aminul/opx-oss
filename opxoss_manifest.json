@@ -19,8 +19,8 @@
       "note": "Debian trixie arm64, same rootfs the rootless VM boots. arm64-v8a only.",
       "chroot64": {
         "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot/chroot64-debian.tar.gz",
-        "sha256": "105d17d746b3ff443d73fd7cb1478a5eccab03f5326ea321f057e9d40461dc0f",
-        "size": 297198669
+        "sha256": "d6b2460fb6001096161a4c63535cd0fcf67c695c58965cea7b69f8b219f6a9c2",
+        "size": 297198631
       }
     },
     "debian_v2": {
@@ -29,8 +29,8 @@
       "note": "Debian trixie arm64, same tree as rootless-650. arm64-v8a only.",
       "chroot64": {
         "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot/chroot64-debian.tar.gz",
-        "sha256": "105d17d746b3ff443d73fd7cb1478a5eccab03f5326ea321f057e9d40461dc0f",
-        "size": 297198669
+        "sha256": "d6b2460fb6001096161a4c63535cd0fcf67c695c58965cea7b69f8b219f6a9c2",
+        "size": 297198631
       }
     }
   },
@@ -59,18 +59,18 @@
     },
     "rootfs": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/rootfs.imgz",
-      "sha256": "391e88825e68e18523e6b3e8955c5f46f47c6d35ba854f1062099557adac7eab",
-      "size": 320447516
+      "sha256": "2c5234a438c217e3e0ba3f424300e3e7ad284257d96fd8c7e2aa8a165bd42d4a",
+      "size": 320231990
     }
   },
   "app": {
-    "versionCode": 1000001,
-    "versionName": "1.0.1",
-    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.1/opxOSS-1.0.1.apk",
-    "sha256": "e1502959f20bd3e03a7ae7446f30f612a29f7d1969d739bf72154e71918672de",
-    "size": 96616649,
+    "versionCode": 1000003,
+    "versionName": "1.0.3",
+    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.3/opxOSS-1.0.3.apk",
+    "sha256": "bc9d492912bfdd388988af8cff93d7babab3a7f5b7a0c75a498dac8d19911094",
+    "size": 96626465,
     "mandatory": false,
-    "changelog": ""
+    "changelog": "APK release test 4"
   },
   "news": [
     {
@@ -147,8 +147,8 @@
     },
     "rootfs": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/rootfs.imgz",
-      "sha256": "391e88825e68e18523e6b3e8955c5f46f47c6d35ba854f1062099557adac7eab",
-      "size": 320447516
+      "sha256": "2c5234a438c217e3e0ba3f424300e3e7ad284257d96fd8c7e2aa8a165bd42d4a",
+      "size": 320231990
     },
     "uml_kernel": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/uml/linux-uml",
