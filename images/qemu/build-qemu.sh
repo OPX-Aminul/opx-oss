@@ -96,7 +96,11 @@ if [ ! -f "$DEPS/lib/libpcre2-8.a" ]; then
 fi
 
 # glib (meson build). Its libffi subproject builds for the target too.
-if [ ! -d "$DEPS/lib/pkgconfig" ]; then
+# Guard on glib's own pkg-config file, NOT on lib/pkgconfig existing --
+# pcre2 (built above) already creates $DEPS/lib/pkgconfig, which would
+# otherwise cause glib to be skipped on a cached run and leave
+# glib-2.0.pc absent so slirp can't find it.
+if [ ! -f "$DEPS/lib/pkgconfig/glib-2.0.pc" ]; then
 	SRC_GLIB=$O/src-glib
 	glib_major_minor="${GLIB_VER%.*}"
 	fetch_unpack "$SRC_GLIB" \
