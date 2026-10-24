@@ -35,6 +35,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.opx.oss.about.AboutFragment;
 import com.opx.oss.appintro.AppIntroActivity;
+import com.opx.oss.license.LicenseManager;
 import com.opx.oss.coremanger.CoreManager;
 import com.opx.oss.custom.Device;
 import com.opx.oss.custom.WiFINetwork;
@@ -441,6 +442,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, AppIntroActivity.class));
             return;
         }
+        if (licenseGate()) return;
         com.opx.oss.engine.RootlessService.start(this);
         landOn(new Dashboard());
         schedulePromo();
@@ -459,6 +461,35 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    /** Blocks the UI when a bound license is banned; fires an online re-check. */
+    private boolean licenseGate() {
+        if (!LicenseManager.isActivated(this)) return false;
+        if (LicenseManager.isBanned(this)) {
+            showLicenseBlocked();
+            return true;
+        }
+        new Thread(() -> {
+            try {
+                if (LicenseManager.checkNow(this) == LicenseManager.Check.BANNED) {
+                    runOnUiThread(this::showLicenseBlocked);
+                }
+            } catch (Exception ignored) {
+            }
+        }).start();
+        return false;
+    }
+
+    private void showLicenseBlocked() {
+        if (isFinishing() || isDestroyed()) return;
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setTitle(R.string.license_blocked_title)
+                .setMessage(R.string.license_blocked_body)
+                .setPositiveButton(R.string.license_exit,
+                        (d, w) -> finishAffinity())
+                .show();
     }
 
     private static final long LAUNCH_BOOT_DEADLINE_MS = 210_000;
@@ -538,6 +569,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, AppIntroActivity.class));
             return;
         }
+        if (licenseGate()) return;
         new Thread(() -> {
             if (core.probeFile(Core.CHROOT_MARKER) == Core.Presence.NO
                     || core.probeFolder(Core.CHROOT_ROOT + "/usr") == Core.Presence.NO) {

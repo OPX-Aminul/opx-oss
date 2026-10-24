@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>opxOSS License Admin</title>
+<style>
+  :root {
+    --bg:#0f1117; --card:#1a1e2a; --line:#2a3040; --txt:#e7eaf2;
+    --muted:#8b93a7; --accent:#5b8cff; --ok:#2ecc71; --bad:#ff5c5c;
+    --warn:#f5b301;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt);
+    font:14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding:22px 28px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:20px; font-weight:600; }
+  header .hint { color:var(--muted); font-size:12px; }
+  main { padding:24px 28px; max-width:1200px; margin:0 auto; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px; margin-bottom:22px; }
+  .card { background:var(--card); border:1px solid var(--line);
+    border-radius:12px; padding:16px; }
+  .card .num { font-size:28px; font-weight:700; }
+  .card .label { color:var(--muted); font-size:12px; text-transform:uppercase;
+    letter-spacing:.04em; margin-top:2px; }
+  .num.ok { color:var(--ok); } .num.bad { color:var(--bad); }
+  .num.accent { color:var(--accent); }
+  .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    margin-bottom:16px; }
+  .toolbar button, .toolbar input { background:var(--card); border:1px solid var(--line);
+    color:var(--txt); border-radius:8px; padding:8px 14px; font-size:13px; }
+  .toolbar input { width:90px; }
+  .toolbar button { cursor:pointer; }
+  .toolbar button:hover { border-color:var(--accent); }
+  .toolbar .tab.active { background:var(--accent); border-color:var(--accent);
+    color:#fff; }
+  .grid { background:var(--card); border:1px solid var(--line);
+    border-radius:12px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding:11px 14px; text-align:left; border-bottom:1px solid var(--line);
+    vertical-align:middle; }
+  th { color:var(--muted); font-size:12px; text-transform:uppercase;
+    letter-spacing:.03em; background:#141824; }
+  tr:last-child td { border-bottom:none; }
+  .key { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing:.06em; font-weight:600; }
+  .badge { display:inline-block; padding:2px 10px; border-radius:999px;
+    font-size:12px; font-weight:600; }
+  .badge.unused { background:#1e2d24; color:var(--ok); }
+  .badge.used { background:#1e2740; color:var(--accent); }
+  .badge.banned { background:#3a1f1f; color:var(--bad); }
+  .small { color:var(--muted); font-size:12px; }
+  .btn { background:transparent; border:1px solid var(--line); color:var(--txt);
+    border-radius:7px; padding:5px 12px; font-size:12px; cursor:pointer; }
+  .btn:hover { border-color:var(--accent); }
+  .btn.ban { color:var(--bad); }
+  .btn.ban:hover { border-color:var(--bad); }
+  .btn.unban { color:var(--ok); }
+  .btn.unban:hover { border-color:var(--ok); }
+  #genResult { margin-left:6px; color:var(--muted); font-size:13px; }
+  .empty { text-align:center; color:var(--muted); padding:30px; }
+  .device { font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>opxOSS License Admin</h1>
+  <span class="hint">JSONBin-backed license registry · this page carries the master key — keep the URL private</span>
+</header>
+<main>
+  <section class="cards">
+    <div class="card"><div class="num accent" id="statTotal">–</div><div class="label">Total keys</div></div>
+    <div class="card"><div class="num accent" id="statUsed">–</div><div class="label">Active (used)</div></div>
+    <div class="card"><div class="num ok" id="statUnused">–</div><div class="label">Unused</div></div>
+    <div class="card"><div class="num bad" id="statBanned">–</div><div class="label">Banned</div></div>
+  </section>
+
+  <div class="toolbar">
+    <button class="tab active" data-filter="all">All</button>
+    <button class="tab" data-filter="used">Used</button>
+    <button class="tab" data-filter="unused">Unused</button>
+    <button class="tab" data-filter="banned">Banned</button>
+    <span style="flex:1"></span>
+    <button id="btnRefresh">Refresh</button>
+    <input id="genCount" type="number" min="1" max="200" value="10">
+    <button id="btnGen">Generate keys</button>
+    <span id="genResult"></span>
+  </div>
+
+  <div class="grid">
+    <table>
+      <thead>
+        <tr>
+          <th>Key</th><th>Status</th><th>Device</th><th>Created</th>
+          <th>Used / Banned</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+// ===== CONFIGURE THESE =====
+var MASTER_KEY = "YOUR_JSONBIN_MASTER_KEY"; // jsonbin master key (plaintext)
+var BIN_ID = "YOUR_JSONBIN_BIN_ID";          // id of the "licenses" bin
+var API = "https://api.jsonbin.io/v3/b";
+// ===========================
+
+var state = { licenses: [], filter: "all" };
+
+function now() { return new Date().toISOString(); }
+
+function norm(s) { return (s||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+function fmt(k) {
+  var n = norm(k), out = "";
+  for (var i = 0; i < n.length; i++) {
+    if (i > 0 && i % 4 === 0) out += "-";
+    out += n.charAt(i);
+  }
+  return out;
+}
+function genKey() {
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", out = "";
+  for (var i = 0; i < 12; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
+  return fmt(out);
+}
+
+function req(url, opts) {
+  return fetch(url, opts).then(function (r) {
+    if (!r.ok) return r.text().then(function (t) {
+      throw new Error("HTTP " + r.status + ": " + t);
+    });
+    return r.json();
+  });
+}
+
+function api(extra) { return req(API + "/" + BIN_ID, extra); }
+
+function load() {
+  return api({ headers: { "X-Master-Key": MASTER_KEY, "X-Bin-Meta": "false" } });
+}
+
+function save(record) {
+  return api({
+    method: "PUT",
+    headers: { "X-Master-Key": MASTER_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(record)
+  });
+}
+
+function recOf(resp) { return resp && resp.record ? resp.record : resp; }
+
+function badge(status) { return '<span class="badge ' + status + '">' + status + '</span>'; }
+
+function deviceCell(item) {
+  var d = item.device || {};
+  if (!d.androidId) return '<span class="small">—</span>';
+  return '<div class="device">' + escapeHtml(d.brand || "") + " " + escapeHtml(d.model || "")
+    + '<br>ID: ' + escapeHtml(d.androidId) + "</div>";
+}
+
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c];
+  });
+}
+
+function timeOr(item) {
+  var t = item.usedAt || item.bannedAt || "";
+  return t ? new Date(t).toLocaleString() : '<span class="small">—</span>';
+}
+
+function render() {
+  var list = state.licenses;
+  var used = list.filter(function (l) { return l.status === "used"; }).length;
+  var unused = list.filter(function (l) { return l.status === "unused"; }).length;
+  var banned = list.filter(function (l) { return l.status === "banned"; }).length;
+
+  document.getElementById("statTotal").textContent = list.length;
+  document.getElementById("statUsed").textContent = used;
+  document.getElementById("statUnused").textContent = unused;
+  document.getElementById("statBanned").textContent = banned;
+
+  var rows = list.filter(function (l) {
+    if (state.filter === "all") return true;
+    return l.status === state.filter;
+  });
+
+  var body = document.getElementById("tableBody");
+  body.innerHTML = "";
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="6" class="empty">No keys here.</td></tr>';
+    return;
+  }
+
+  rows.forEach(function (l) {
+    var tr = document.createElement("tr");
+    var action = l.status === "banned"
+      ? '<button class="btn unban" data-action="unban" data-key="' + escapeHtml(l.key) + '">Unban</button>'
+      : '<button class="btn ban" data-action="ban" data-key="' + escapeHtml(l.key) + '">Ban</button>';
+    tr.innerHTML =
+      '<td class="key">' + escapeHtml(l.key) + "</td>" +
+      "<td>" + badge(l.status) + "</td>" +
+      "<td>" + deviceCell(l) + "</td>" +
+      "<td class='small'>" + (l.createdAt ? new Date(l.createdAt).toLocaleString() : "—") + "</td>" +
+      "<td class='small'>" + timeOr(l) + "</td>" +
+      "<td>" + action + "</td>";
+    body.appendChild(tr);
+  });
+}
+
+function loadState() {
+  return load().then(function (resp) {
+    var rec = recOf(resp);
+    state.licenses = Array.isArray(rec.licenses) ? rec.licenses : [];
+    state.filter = state.filter || "all";
+    render();
+  });
+}
+
+function saveState() {
+  return save({ licenses: state.licenses }).then(function () {
+    setGen("Saved.");
+  });
+}
+
+function setGen(msg) { document.getElementById("genResult").textContent = msg; }
+
+function toggle(action, key) {
+  var hit = null;
+  state.licenses.forEach(function (l) { if (l.key === key) hit = l; });
+  if (!hit) return;
+  if (action === "ban") {
+    hit.status = "banned";
+    hit.bannedAt = now();
+    hit.banReason = hit.banReason || "banned by admin";
+  } else {
+    hit.status = "unused";
+    hit.bannedAt = null;
+    hit.banReason = "";
+  }
+  saveState().then(loadState).catch(function (e) { setGen("Error: " + e.message); });
+}
+
+function generate(count) {
+  if (!count || count < 1) return;
+  var existing = {};
+  state.licenses.forEach(function (l) { existing[l.key] = true; });
+  var created = [], tries = 0;
+  while (created.length < count && tries < count * 200) {
+    tries++;
+    var k = genKey();
+    if (!existing[k]) { existing[k] = true; created.push({ key: k, status: "unused", createdAt: now() }); }
+  }
+  state.licenses = state.licenses.concat(created);
+  saveState().then(function () {
+    setGen("Generated " + created.length + " key(s).");
+    return loadState();
+  }).catch(function (e) { setGen("Error: " + e.message); });
+}
+
+document.getElementById("btnGen").addEventListener("click", function () {
+  generate(parseInt(document.getElementById("genCount").value, 10) || 10);
+});
+document.getElementById("btnRefresh").addEventListener("click", function () { loadState(); });
+document.getElementById("tableBody").addEventListener("click", function (e) {
+  var btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  toggle(btn.getAttribute("data-action"), btn.getAttribute("data-key"));
+});
+document.querySelectorAll(".tab").forEach(function (tab) {
+  tab.addEventListener("click", function () {
+    document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
+    tab.classList.add("active");
+    state.filter = tab.getAttribute("data-filter");
+    render();
+  });
+});
+
+loadState().catch(function (e) {
+  document.getElementById("tableBody").innerHTML =
+    '<tr><td colspan="6" class="empty">Failed to load: ' + escapeHtml(e.message)
+    + '. Check MASTER_KEY / BIN_ID in the page source.</td></tr>';
+});
+</script>
+</body>
+</html>

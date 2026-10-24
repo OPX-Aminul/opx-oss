@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/IntroContent">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/license_eyebrow"
+        style="@style/IntroEyebrow"
+        android:text="@string/intro_eyebrow_license" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/license_title"
+        style="@style/IntroTitle"
+        android:text="@string/intro_license_title" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/license_subtitle"
+        style="@style/IntroSubtitle"
+        android:text="@string/intro_license_subtitle" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/license_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:hint="@string/intro_license_hint"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/license_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapCharacters|textNoSuggestions"
+            android:maxLength="14"
+            android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-"
+            android:textSize="20sp"
+            android:letterSpacing="0.08"
+            android:gravity="center"
+            android:textColor="@color/intro_text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/license_status"
+        style="@style/IntroSubtitle"
+        android:layout_marginTop="12dp"
+        android:textSize="14sp"
+        android:visibility="invisible" />
+</LinearLayout>

@@ -99,4 +99,16 @@ this device</string>
 
     <string name="pcheck_run">Run check</string>
     <string name="pcheck_running">Checking…</string>
+
+    <string name="intro_eyebrow_license">License</string>
+    <string name="intro_license_title">Activate your license</string>
+    <string name="intro_license_subtitle">Enter the 12-character key that came with your purchase. An internet connection is required.</string>
+    <string name="intro_license_hint">XXXX-XXXX-XXXX</string>
+    <string name="intro_action_activate">Activate</string>
+    <string name="license_status_checking">Checking…</string>
+    <string name="license_status_ok">License activated. You\'re good to go.</string>
+    <string name="license_status_invalid">That key isn\'t recognized.</string>
+    <string name="license_status_banned">This key has been banned.</string>
+    <string name="license_status_in_use">This key is already in use on another device.</string>
+    <string name="license_status_offline">No connection. Check your internet and try again.</string>
 </resources>

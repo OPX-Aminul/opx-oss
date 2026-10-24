@@ -8,6 +8,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.opx.oss.license.LicenseScheduler;
 import com.opx.oss.logger.LogEntry;
 import com.opx.oss.logger.LogStore;
 import com.opx.oss.ota.NotificationCenter;
@@ -39,6 +40,7 @@ public class opxOSSApp extends com.opx.terminal.App {
 
         NotificationCenter.ensureChannel(this);
         UpdateScheduler.schedule(this);
+        LicenseScheduler.schedule(this);
         applyEdgeToEdgeInsets();
         com.opx.oss.engine.GuestShellFactory.install();
         com.opx.terminal.backend.TerminalSession.setShellChooser(() -> {

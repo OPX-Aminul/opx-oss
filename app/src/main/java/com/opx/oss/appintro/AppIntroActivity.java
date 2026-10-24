@@ -28,6 +28,7 @@ import com.opx.oss.appintro.slides.Slide1;
 import com.opx.oss.appintro.slides.Slide2;
 import com.opx.oss.appintro.slides.Slide3;
 import com.opx.oss.appintro.slides.Slide6Final;
+import com.opx.oss.appintro.slides.SlideLicense;
 import com.opx.oss.appintro.slides.SlideCapabilities;
 import com.opx.oss.appintro.slides.SlideEngineSelect;
 import com.opx.oss.appintro.slides.SlidePCheck;
@@ -49,7 +50,7 @@ public class AppIntroActivity extends FragmentActivity {
 
     public static final String EXTRA_REPLACE_PAYLOAD = "replace_payload";
 
-    public enum Page { WELCOME, CONSENT, CAPS, ENGINE, PERMS, PCHECK, INSTALL_CHROOT, INSTALL_QEMU, FINAL }
+    public enum Page { WELCOME, CONSENT, CAPS, ENGINE, PERMS, PCHECK, INSTALL_CHROOT, INSTALL_QEMU, LICENSE, FINAL }
 
     public static Intent updateIntent(Context context, EngineType engine) {
         Intent intent = new Intent(context, AppIntroActivity.class);
@@ -78,7 +79,7 @@ public class AppIntroActivity extends FragmentActivity {
 
     private final List<Page> pages = new ArrayList<>(Arrays.asList(
             Page.WELCOME, Page.CONSENT, Page.CAPS, Page.ENGINE, Page.PERMS, Page.PCHECK,
-            Page.INSTALL_CHROOT, Page.FINAL));
+            Page.INSTALL_CHROOT, Page.LICENSE, Page.FINAL));
 
     private ViewPager2 mPager;
     private ScreenPagerAdapter pagerAdapter;
@@ -301,6 +302,7 @@ public class AppIntroActivity extends FragmentActivity {
             if (!pcheckDone) pages.add(Page.PCHECK);
             pages.add(Page.INSTALL_CHROOT);
         }
+        if (!pages.contains(Page.LICENSE)) pages.add(Page.LICENSE);
         pages.add(Page.FINAL);
 
         pagerAdapter.notifyDataSetChanged();
@@ -331,6 +333,13 @@ public class AppIntroActivity extends FragmentActivity {
 
     public void refreshPrimary() {
         if (mPager != null) bindChrome(mPager.getCurrentItem());
+    }
+
+    /** Advances past the license slide after a successful activation. */
+    public void advanceFromLicense() {
+        if (mPager == null) return;
+        int next = mPager.getCurrentItem() + 1;
+        if (next < pages.size()) mPager.setCurrentItem(next, true);
     }
 
     private IntroPage currentPage() {
@@ -399,6 +408,7 @@ public class AppIntroActivity extends FragmentActivity {
                 case PCHECK: return new SlidePCheck();
                 case INSTALL_CHROOT: return new Slide3();
                 case INSTALL_QEMU: return new SlideQemuInstall();
+                case LICENSE: return new SlideLicense();
                 case FINAL:
                 default: return new Slide6Final();
             }
