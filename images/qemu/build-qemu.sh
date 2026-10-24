@@ -131,7 +131,8 @@ if [ ! -d "$DEPS/include/pixman-1" ]; then
 		--default-library=static \
 		--prefix "$DEPS" \
 		--libdir lib \
-		-Dtests=disabled
+		-Dtests=disabled \
+		-Da64-neon=disabled
 	ninja -C "$O/build-pixman" -j"$JOBS"
 	ninja -C "$O/build-pixman" install
 fi
