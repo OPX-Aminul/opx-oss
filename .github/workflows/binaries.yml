@@ -71,7 +71,7 @@ jobs:
       # The version matches the toolchain the original libqemu.so was built
       # with: stable NDK r29 (29.0.14206865), clang 21, per the binary's
       # .comment (clang 21.0.0, r563880c) and .note.android.ident (r29).
-       - name: Install Android SDK + NDK (for UML source / QEMU build)
+      - name: Install Android SDK + NDK (for UML source / QEMU build)
         if: ${{ github.event.inputs.uml_tree_repo != '' || github.event.inputs.build_qemu == 'true' }}
         run: |
           SDKMANAGER="${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
