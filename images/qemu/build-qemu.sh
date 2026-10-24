@@ -41,26 +41,11 @@ export PKG_CONFIG_PATH=$DEPS/lib/pkgconfig
 export PKG_CONFIG_LIBDIR=$DEPS/lib/pkgconfig:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API/pkgconfig
 export LIBRARY_PATH="$DEPS/lib:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API"
 
-# Declare shm_open/shm_unlink for NDK API < 30 where the headers omit them.
-# We do NOT define _GNU_SOURCE to avoid corrupting NDK header parsing.
-# This header only declares symbols — it does NOT include system headers,
-# so there's no risk of header recursion or NDK annotation conflicts.
-mkdir -p "$DEPS/lib" "$DEPS/include"
-cat > "$DEPS/include/shim_rt.h" <<'RT'
-#ifndef SHIM_RT_H
-#define SHIM_RT_H
-typedef unsigned int mode_t;
-extern int shm_open(const char *, int, mode_t);
-extern int shm_unlink(const char *);
-extern int fallocate(int, int, long long, long long);
-extern int fallocate64(int, int, long long, long long);
-#endif
-RT
-
 # Android NDK bionic (API 29) does not export POSIX shm_open/shm_unlink — they
 # were added in API 30. QEMU's meson probes for shm_open and then falls back to
 # find_library('rt'); since Android has no librt either, build a tiny librt
 # shim providing those symbols so meson setup succeeds.
+mkdir -p "$DEPS/lib" "$DEPS/include"
 say "building librt shim for aarch64-linux-android"
 "$CROSS-clang" -fPIC -shared -o "$DEPS/lib/librt.so" "$HERE/shim_rt.c" \
 	-Wl,--soname,librt.so || die "librt shim build failed"
@@ -232,6 +217,15 @@ if [ -z "${SKIP_XIAOMI_PATCH:-0}" ]; then
 	python3 "$IMAGES_DIR/../scripts/apply-xiaomi-qemu-patch.py" "$SRC/hw/usb/host-libusb.c" \
 		|| die "Xiaomi host-libusb.c patch failed (set SKIP_XIAOMI_PATCH=1 to ignore)"
 fi
+
+# Patch oslib-posix.c to declare shm_open/shm_unlink — the NDK headers don't
+# provide them (API 30+ only), so we add a local extern declaration.
+# NOTE: We must NOT use -include in cross.ini because force-including a header
+# that includes <sys/types.h> causes NDK header annotation parse errors with
+# the NDK clang. Instead, patch the single file that needs the declaration.
+say "patching oslib-posix.c for shm_open on NDK API $API"
+sed -i '/#include "qemu\/main-loop.h"/a #ifndef shm_open\nextern int shm_open(const char *, int, mode_t);\nextern int shm_unlink(const char *);\n#endif' \
+	"$SRC/util/oslib-posix.c" 2>/dev/null || true
 
 say "configuring QEMU $QEMU_VER ($JOBS jobs)"
 mkdir -p "$O/build"

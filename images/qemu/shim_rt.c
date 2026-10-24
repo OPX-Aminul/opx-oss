@@ -3,10 +3,10 @@
  * implementations via a temporary directory so QEMU's meson shm_open probe
  * and the actual runtime code (which assign the result to an int fd) succeed.
  *
- * Note: We do NOT define _GNU_SOURCE here because it can cause NDK's own
- * headers (fcntl.h) to emit parse errors with newer clang versions. The
- * extern declarations in shim_rt.h are sufficient for the compiler; we
- * only need the symbols at link time via librt.so. */
+ * Note: This file is compiled standalone (not with -include), so it can safely
+ * include system headers. The matching shim_rt.h used via -include in the
+ * cross file is a minimal version that avoids including system headers.
+ */
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
