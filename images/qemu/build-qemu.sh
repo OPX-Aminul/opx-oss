@@ -6,6 +6,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 
 QEMU_VER=${QEMU_VER:-11.0.2}
 GLIB_VER=${GLIB_VER:-2.80.5}
+PCRE2_VER=${PCRE2_VER:-10.44}
 PIXMAN_VER=${PIXMAN_VER:-0.42.2}
 LIBUSB_VER=${LIBUSB_VER:-1.0.27}
 SLIRP_REV=${SLIRP_REV:-26be815b86e8d49add8c9a8b320239b9594ff03d}
@@ -32,6 +33,12 @@ need curl tar xz meson ninja python3 pkg-config make
 mkdir -p "$O" "$DEST" "$DEPS"
 
 CROSS=$TOOL/aarch64-linux-android$API
+
+# Deps install into $DEPS; put their pkg-config on the search path for all
+# meson dependency builds (glib needs pcre2, something meson resolves via
+# pkg-config). Keep this BEFORE the glib build.
+export PKG_CONFIG_PATH=$DEPS/lib/pkgconfig
+export PKG_CONFIG_LIBDIR=$DEPS/lib/pkgconfig:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API/pkgconfig
 
 # A meson cross file shared by QEMU and the dependency builds. Every library
 # QEMU links against must be compiled for the target (aarch64-linux-android),
@@ -69,6 +76,26 @@ fetch_unpack() {
 	mkdir -p "$dir"
 	tar -C "$dir" --strip-components=1 -xf "$O/$file"
 }
+
+# pcre2 (autotools) -- glib 2.80 requires it for its regex engine (gregex.c),
+# and meson finds it via pkg-config, so it must be built for the target first.
+if [ ! -f "$DEPS/lib/libpcre2-8.a" ]; then
+	SRC_PCRE2=$O/src-pcre2
+	fetch_unpack "$SRC_PCRE2" \
+		"https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$PCRE2_VER/pcre2-$PCRE2_VER.tar.bz2" \
+		"pcre2-$PCRE2_VER.tar.bz2"
+	say "building pcre2 $PCRE2_VER for aarch64-linux-android"
+	cd "$SRC_PCRE2"
+	CC="$CROSS-clang" CFLAGS="-fPIC -O2" ./configure \
+		--host=aarch64-linux-android \
+		--prefix="$DEPS" \
+		--disable-shared --enable-static \
+		--enable-pcre2-8 \
+		--disable-pcre2-16 --disable-pcre2-32 \
+		--disable-jit
+	make -j"$JOBS" && make install
+	cd "$HERE"
+fi
 
 # glib (meson build). Its libffi subproject builds for the target too.
 if [ ! -d "$DEPS/lib/pkgconfig" ]; then
@@ -146,9 +173,6 @@ if [ ! -f "$DEPS/lib/libslirp.so" ]; then
 	ninja -C "$O/build-slirp" -j"$JOBS"
 	ninja -C "$O/build-slirp" install
 fi
-
-export PKG_CONFIG_PATH=$DEPS/lib/pkgconfig
-export PKG_CONFIG_LIBDIR=$DEPS/lib/pkgconfig:$TOOL/../sysroot/usr/lib/aarch64-linux-android/$API/pkgconfig
 
 SRC=$O/src
 if [ ! -d "$SRC" ]; then
