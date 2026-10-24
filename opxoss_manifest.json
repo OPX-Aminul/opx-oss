@@ -1,0 +1,164 @@
+{
+  "manifest_version": 1,
+  "core": {
+    "version": "chroot-main",
+    "note": "Legacy Alpine chroot for app versions below 6. Do not repoint these keys: shipped builds < 6 read them directly and cannot be changed.",
+    "chroot64": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot-main/chroot64.tar.gz",
+      "sha256": "2ad21f1445102913c52099bcb86ab380f9520c9e4d7771e6a951f634451068ac",
+      "size": 58918734
+    },
+    "chroot32": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot-main/chroot32.tar.gz",
+      "sha256": "faa4b256819818360945d8fecc8f05f0f158a76e6a61feb8eff66308c32b3341",
+      "size": 140633600
+    },
+    "debian": {
+      "min_version_code": 600,
+      "version": "chroot-debian-trixie",
+      "note": "Debian trixie arm64, same rootfs the rootless VM boots. arm64-v8a only.",
+      "chroot64": {
+        "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot/chroot64-debian.tar.gz",
+        "sha256": "105d17d746b3ff443d73fd7cb1478a5eccab03f5326ea321f057e9d40461dc0f",
+        "size": 297198669
+      }
+    },
+    "debian_v2": {
+      "min_version_code": 650,
+      "version": "chroot-debian-trixie-uml",
+      "note": "Debian trixie arm64, same tree as rootless-650. arm64-v8a only.",
+      "chroot64": {
+        "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot/chroot64-debian.tar.gz",
+        "sha256": "105d17d746b3ff443d73fd7cb1478a5eccab03f5326ea321f057e9d40461dc0f",
+        "size": 297198669
+      }
+    }
+  },
+  "rootless": {
+    "version": "rootless-main",
+    "note": "Local dev ships these inside the APK under assets/rootless/. This block is the OTA fallback; arm64-v8a only.",
+    "qemu": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/qemu-system-aarch64",
+      "sha256": "2a87f531371b3f8d45141d48632e0dbe2c3d968fbcb385ba105d671479fb8c99",
+      "size": 43800304
+    },
+    "kernel": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/Image",
+      "sha256": "57cf5ce04531bda9302f01fb1e3dd9e065a15a9b7684390ba4b53fa617d01ece",
+      "size": 28995592
+    },
+    "initrd": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/initrd.img",
+      "sha256": "578bfb41e333f26c4281ce1481d720e0348d5fd25d14a440bafa607046567854",
+      "size": 13942802
+    },
+    "libslirp": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/libslirp.so",
+      "sha256": "226372426fda32c9fccd8e831d0901a86bfff3c3e6f7a60336d6dde149f756c4",
+      "size": 1145496
+    },
+    "rootfs": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/rootfs.imgz",
+      "sha256": "391e88825e68e18523e6b3e8955c5f46f47c6d35ba854f1062099557adac7eab",
+      "size": 320447516
+    }
+  },
+  "app": {
+    "versionCode": 1000001,
+    "versionName": "1.0.1",
+    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.1/opxOSS-1.0.1.apk",
+    "sha256": "e1502959f20bd3e03a7ae7446f30f612a29f7d1969d739bf72154e71918672de",
+    "size": 96616649,
+    "mandatory": false,
+    "changelog": ""
+  },
+  "news": [
+    {
+      "id": 3,
+      "title": "opxOSS 6.5 - UML engine & Wi-Fi in Linux",
+      "description": "A second rootless engine: User Mode Linux boots as a normal process, with no CPU emulation, and opxOSS now probes the device and picks the engine itself. Wi-Fi can run inside Linux for adapters Android has no driver for, while root keeps running everything else. Also new: a Wordlists manager, a hash cracker, a live attack monitor, a USB chain that shows where an adapter stops, a customizable dashboard, diagnostics export and a Chinese translation. arm64-v8a only.",
+      "newsDate": "2026-10-03",
+      "newsUrl": "https://github.com/OPX-Aminul/opx-oss/releases/tag/6.5",
+      "imageUrl": "",
+      "pinned": true,
+      "actionbutton1": true,
+      "actionbutton1text": "Open release",
+      "actionbutton1url": "https://github.com/OPX-Aminul/opx-oss/releases/tag/6.5",
+      "actionbutton2": false,
+      "actionbutton2text": "",
+      "actionbutton2url": ""
+    },
+    {
+      "id": 2,
+      "title": "opxOSS 6.0 - Rootless engine & Debian",
+      "description": "The full toolset now runs without root: opxOSS boots an arm64 QEMU virtual machine and routes tools into the guest. The chroot moved from Alpine to Debian trixie, the same rootfs the VM boots. Also new: a root-free network scanner (mDNS, SSDP, NetBIOS, SNMP), Cameradar RTSP discovery, a reworked dashboard and VM settings. RouterScan has been removed. arm64-v8a only.",
+      "newsDate": "2026-08-09",
+      "newsUrl": "https://github.com/OPX-Aminul/opx-oss/releases/tag/v6.0",
+      "imageUrl": "",
+      "pinned": false,
+      "actionbutton1": true,
+      "actionbutton1text": "Open release",
+      "actionbutton1url": "https://github.com/OPX-Aminul/opx-oss/releases/tag/v6.0",
+      "actionbutton2": false,
+      "actionbutton2text": "",
+      "actionbutton2url": ""
+    },
+    {
+      "id": 1,
+      "title": "opxOSS is open source",
+      "description": "Released as free and open-source software. Visit the GitHub repository for source, issues and contributions.",
+      "newsDate": "2026-06-14",
+      "newsUrl": "https://github.com/OPX-Aminul/opx-oss",
+      "imageUrl": "",
+      "pinned": true,
+      "actionbutton1": true,
+      "actionbutton1text": "Open GitHub",
+      "actionbutton1url": "https://github.com/OPX-Aminul/opx-oss",
+      "actionbutton2": false,
+      "actionbutton2text": "",
+      "actionbutton2url": ""
+    }
+  ],
+  "notifications": [],
+  "rootless_v2": {
+    "min_version_code": 650,
+    "version": "rootless-650",
+    "note": "Kernel 7.2 from the UML port tree; one rootfs for both QEMU and UML. Guest is reached over SSH.",
+    "kernel_release": "7.2.0-rc4-g8897487c5223",
+    "qemu": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/qemu-system-aarch64",
+      "sha256": "2a87f531371b3f8d45141d48632e0dbe2c3d968fbcb385ba105d671479fb8c99",
+      "size": 43800304
+    },
+    "libslirp": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/libslirp.so",
+      "sha256": "226372426fda32c9fccd8e831d0901a86bfff3c3e6f7a60336d6dde149f756c4",
+      "size": 1145496
+    },
+    "kernel": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/Image",
+      "sha256": "57cf5ce04531bda9302f01fb1e3dd9e065a15a9b7684390ba4b53fa617d01ece",
+      "size": 28995592
+    },
+    "initrd": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/initrd.img",
+      "sha256": "578bfb41e333f26c4281ce1481d720e0348d5fd25d14a440bafa607046567854",
+      "size": 13942802
+    },
+    "rootfs": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/rootfs.imgz",
+      "sha256": "391e88825e68e18523e6b3e8955c5f46f47c6d35ba854f1062099557adac7eab",
+      "size": 320447516
+    },
+    "uml_kernel": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/uml/linux-uml",
+      "sha256": "0aaa871f47cd0df41623056961a24f8e242ac27a410152d6886eb441982d0f02",
+      "size": 19395040
+    },
+    "uml_stub": {
+      "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/uml/stub_exe",
+      "sha256": "27273efe3344f5ea48e30fc0bd9c564f8ba56ad7e9e4662868c95ee1609b0f55",
+      "size": 1968
+    }
+  }
+}
