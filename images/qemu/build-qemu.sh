@@ -52,10 +52,8 @@ strip = '$TOOL/llvm-strip'
 pkgconfig = 'pkg-config'
 
 [built-in options]
-c_args = ['-fPIC', '-flto']
-cpp_args = ['-fPIC', '-flto']
-c_link_args = ['-flto']
-cpp_link_args = ['-flto']
+c_args = ['-fPIC']
+cpp_args = ['-fPIC']
 
 [host_machine]
 system = 'linux'
