@@ -287,7 +287,8 @@ meson setup "$O/build" "$SRC" \
 	-Dvhost_user=disabled \
 	-Dvhost_kernel=disabled \
 	-Dvhost_vdpa=disabled \
-	-Dvhost_crypto=disabled
+	-Dvhost_crypto=disabled \
+	-Dkvm=disabled
 say "building qemu-system-aarch64 with $JOBS jobs"
 PKG_CONFIG_PATH="$DEPS/lib/pkgconfig" \
 ninja -C "$O/build" -j"$JOBS" qemu-system-aarch64
