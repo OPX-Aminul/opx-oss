@@ -19,8 +19,8 @@
       "note": "Debian trixie arm64, same rootfs the rootless VM boots. arm64-v8a only.",
       "chroot64": {
         "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot/chroot64-debian.tar.gz",
-        "sha256": "d6b2460fb6001096161a4c63535cd0fcf67c695c58965cea7b69f8b219f6a9c2",
-        "size": 297198631
+        "sha256": "a2267b5b2b8772822bda9ab794e9ea449e71ed45ab169f21edbcd2a799667851",
+        "size": 297196885
       }
     },
     "debian_v2": {
@@ -29,8 +29,8 @@
       "note": "Debian trixie arm64, same tree as rootless-650. arm64-v8a only.",
       "chroot64": {
         "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/chroot/chroot64-debian.tar.gz",
-        "sha256": "d6b2460fb6001096161a4c63535cd0fcf67c695c58965cea7b69f8b219f6a9c2",
-        "size": 297198631
+        "sha256": "a2267b5b2b8772822bda9ab794e9ea449e71ed45ab169f21edbcd2a799667851",
+        "size": 297196885
       }
     }
   },
@@ -39,8 +39,8 @@
     "note": "Local dev ships these inside the APK under assets/rootless/. This block is the OTA fallback; arm64-v8a only.",
     "qemu": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/qemu-system-aarch64",
-      "sha256": "2a87f531371b3f8d45141d48632e0dbe2c3d968fbcb385ba105d671479fb8c99",
-      "size": 43800304
+      "sha256": "59cd05e6e2dcdba6755aac95db62c69e679d43a959720e85e6be0afe57d74df7",
+      "size": 41448952
     },
     "kernel": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/Image",
@@ -54,23 +54,23 @@
     },
     "libslirp": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/libslirp.so",
-      "sha256": "226372426fda32c9fccd8e831d0901a86bfff3c3e6f7a60336d6dde149f756c4",
-      "size": 1145496
+      "sha256": "d09151695c6f819678b3148546807020f7910a4117d1065f4b0c08b9da955ec9",
+      "size": 3235904
     },
     "rootfs": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/rootfs.imgz",
-      "sha256": "2c5234a438c217e3e0ba3f424300e3e7ad284257d96fd8c7e2aa8a165bd42d4a",
-      "size": 320231990
+      "sha256": "7ed1267edfa57942b3294245b7d323cffc594a8fd451330765970c5d67328371",
+      "size": 320453040
     }
   },
   "app": {
-    "versionCode": 1000003,
-    "versionName": "1.0.3",
-    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.3/opxOSS-1.0.3.apk",
-    "sha256": "bc9d492912bfdd388988af8cff93d7babab3a7f5b7a0c75a498dac8d19911094",
-    "size": 96626465,
+    "versionCode": 1000005,
+    "versionName": "1.0.5",
+    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.5/opxOSS-1.0.5.apk",
+    "sha256": "acf7725b197d9fedc0657e0005f13f09915f0eeff7a9c67324fbae00f79abd09",
+    "size": 96365977,
     "mandatory": false,
-    "changelog": "APK release test 4"
+    "changelog": "Auto: inject patched QEMU binaries from latest binaries build"
   },
   "news": [
     {
@@ -127,13 +127,13 @@
     "kernel_release": "7.2.0-rc4-g8897487c5223",
     "qemu": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/qemu-system-aarch64",
-      "sha256": "2a87f531371b3f8d45141d48632e0dbe2c3d968fbcb385ba105d671479fb8c99",
-      "size": 43800304
+      "sha256": "59cd05e6e2dcdba6755aac95db62c69e679d43a959720e85e6be0afe57d74df7",
+      "size": 41448952
     },
     "libslirp": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/libslirp.so",
-      "sha256": "226372426fda32c9fccd8e831d0901a86bfff3c3e6f7a60336d6dde149f756c4",
-      "size": 1145496
+      "sha256": "d09151695c6f819678b3148546807020f7910a4117d1065f4b0c08b9da955ec9",
+      "size": 3235904
     },
     "kernel": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/Image",
@@ -147,8 +147,8 @@
     },
     "rootfs": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/qemu/rootfs.imgz",
-      "sha256": "2c5234a438c217e3e0ba3f424300e3e7ad284257d96fd8c7e2aa8a165bd42d4a",
-      "size": 320231990
+      "sha256": "7ed1267edfa57942b3294245b7d323cffc594a8fd451330765970c5d67328371",
+      "size": 320453040
     },
     "uml_kernel": {
       "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/uml/linux-uml",
