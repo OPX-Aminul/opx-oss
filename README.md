@@ -13,12 +13,6 @@ opxOSS puts network, wireless, BLE and web security tools in one app. On a roote
 | **Min Android** | 7.0 (API 24) |
 | **License** | [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html) |
 
-<p align="center">
-  <img src="screens/dashboard.png" alt="Dashboard" width="220">
-  <img src="screens/wifi.png" alt="WiFi networks" width="220">
-  <img src="screens/nmap.png" alt="Nmap" width="220">
-</p>
-
 ---
 
 ## Download
@@ -78,20 +72,6 @@ Open the terminal from the drawer, or from the **opxOSS Terminal** launcher icon
 | **Cameradar** | RTSP camera discovery. |
 | **Core manager** | Mount / unmount / repair the chroot or VM, switch engines, manage installed components. USB chain view shows where an adapter stops. |
 | **Logs / diagnostics** | Live logs and exportable diagnostics. |
-
-<p align="center">
-  <img src="screens/handshakes.png" alt="Handshakes" width="180">
-  <img src="screens/local-network.png" alt="Local network" width="180">
-  <img src="screens/hid.png" alt="HID Attacks" width="180">
-  <img src="screens/usb-arsenal.png" alt="USB Arsenal" width="180">
-</p>
-
-<p align="center">
-  <img src="screens/metasploit.png" alt="Metasploit" width="180">
-  <img src="screens/nuclei.png" alt="Nuclei" width="180">
-  <img src="screens/vnc.png" alt="VNC desktop" width="180">
-  <img src="screens/terminal.png" alt="Terminal" width="180">
-</p>
 
 ---
 
