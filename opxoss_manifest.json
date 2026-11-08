@@ -64,13 +64,13 @@
     }
   },
   "app": {
-    "versionCode": 1000005,
-    "versionName": "1.0.5",
-    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.5/opxOSS-1.0.5.apk",
-    "sha256": "acf7725b197d9fedc0657e0005f13f09915f0eeff7a9c67324fbae00f79abd09",
-    "size": 96365977,
+    "versionCode": 1000008,
+    "versionName": "1.0.8",
+    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.8/opxOSS-1.0.8.apk",
+    "sha256": "eeec7984ccbf47efd04262dd5cceb4d3c63dc4c560c580481a0af5ad340a709d",
+    "size": 96365677,
     "mandatory": false,
-    "changelog": "Auto: inject patched QEMU binaries from latest binaries build"
+    "changelog": "Fix public-repo manifest push (sha fetch via curl)"
   },
   "news": [
     {
