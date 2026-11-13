@@ -64,13 +64,13 @@
     }
   },
   "app": {
-    "versionCode": 1000010,
-    "versionName": "1.0.10",
-    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.10/opxOSS-1.0.10.apk",
-    "sha256": "d2ebbe935043d54f109367527e44bc32aa9132fef5c4ebe7dead579cabee005d",
-    "size": 96368209,
+    "versionCode": 1000011,
+    "versionName": "1.0.11",
+    "url": "https://github.com/OPX-Aminul/opx-oss/releases/download/v1.0.11/opxOSS-1.0.11.apk",
+    "sha256": "6b34baf9e22c3ff231de1e499e9b1afec2aff963608790c2e0210664828a9d1d",
+    "size": 96487009,
     "mandatory": false,
-    "changelog": "More bug fixed 📍"
+    "changelog": ""
   },
   "news": [
     {
